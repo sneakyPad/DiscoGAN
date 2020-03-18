@@ -70,7 +70,22 @@ def get_data():
 
         data_B = np.hstack( [data_B_1, data_B_2] )
         test_B = np.hstack( [test_B_1, test_B_2] )
+        
+    elif args.task_name == 'cats2pandas':
+        data_A_1, data_A_2 = get_cat2panda_files( item='cat', test=False )
+        test_A_1, test_A_2 = get_cat2panda_files( item='cat', test=True )
 
+        data_A = np.hstack( [data_A_1, data_A_2] )
+        test_A = np.hstack( [test_A_1, test_A_2] )
+
+        data_B_1, data_B_2 = get_cat2panda_files( item='panda', test=False )
+        test_B_1, test_B_2 = get_cat2panda_files( item='panda', test=True )
+
+        data_B = np.hstack( [data_B_1, data_B_2] )
+        test_B = np.hstack( [test_B_1, test_B_2] )
+
+        
+        
     return data_A, data_B, test_A, test_B
 
 def get_fm_loss(real_feats, fake_feats, criterion):
@@ -130,7 +145,7 @@ def main():
         test_A = read_images( test_style_A, 'A', args.image_size )
         test_B = read_images( test_style_B, 'B', args.image_size )
 
-    elif args.task_name == 'handbags2shoes' or args.task_name == 'shoes2handbags':
+    elif args.task_name == 'handbags2shoes' or args.task_name == 'shoes2handbags' or args.task_name == 'cats2pandas':
         test_A = read_images( test_style_A, 'B', args.image_size )
         test_B = read_images( test_style_B, 'B', args.image_size )
 
@@ -141,6 +156,7 @@ def main():
     test_A = Variable( torch.FloatTensor( test_A ), volatile=True )
     test_B = Variable( torch.FloatTensor( test_B ), volatile=True )
 
+    print('passed test_B')
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     if not os.path.exists(model_path):
@@ -152,6 +168,7 @@ def main():
     discriminator_B = Discriminator()
 
     if cuda:
+        print('cuda')
         test_A = test_A.cuda()
         test_B = test_B.cuda()
         generator_A = generator_A.cuda()
@@ -160,7 +177,9 @@ def main():
         discriminator_B = discriminator_B.cuda()
 
     data_size = min( len(data_style_A), len(data_style_B) )
+    print('data_size', data_size)
     n_batches = ( data_size // batch_size )
+    print('n_batches', n_batches)
 
     recon_criterion = nn.MSELoss()
     gan_criterion = nn.BCELoss()
@@ -199,7 +218,7 @@ def main():
             if args.task_name.startswith( 'edges2' ):
                 A = read_images( A_path, 'A', args.image_size )
                 B = read_images( B_path, 'B', args.image_size )
-            elif args.task_name =='handbags2shoes' or args.task_name == 'shoes2handbags':
+            elif args.task_name =='handbags2shoes' or args.task_name == 'shoes2handbags' or args.task_name == 'cats2pandas':
                 A = read_images( A_path, 'B', args.image_size )
                 B = read_images( B_path, 'B', args.image_size )
             else:

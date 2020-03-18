@@ -6,7 +6,12 @@ from scipy.misc import imresize
 import scipy.io
 
 
+# +
 dataset_path = './datasets/'
+cat_path = os.path.join(dataset_path, 'dog-cat-panda/animals/cats')
+dog_path = os.path.join(dataset_path, 'dog-cat-panda/animals/dogs')
+panda_path = os.path.join(dataset_path, 'dog-cat-panda/animals/panda')
+
 celebA_path = os.path.join(dataset_path, 'celebA')
 handbag_path = os.path.join(dataset_path, 'edges2handbags')
 shoe_path = os.path.join(dataset_path, 'edges2shoes')
@@ -15,6 +20,9 @@ chair_path = os.path.join(dataset_path, 'rendered_chairs')
 face_3d_path = os.path.join(dataset_path, 'PublicMM1', '05_renderings')
 face_real_path = os.path.join(dataset_path, 'real_face')
 car_path = os.path.join(dataset_path, 'data', 'cars')
+
+
+# -
 
 def shuffle_data(da, db):
     a_idx = range(len(da))
@@ -28,10 +36,16 @@ def shuffle_data(da, db):
 
     return shuffled_da, shuffled_db
 
+# +
+import os
+
 def read_images( filenames, domain=None, image_size=64):
 
     images = []
+    cnt_bad_images = 0
+#     print('filenames: ', filenames)
     for fn in filenames:
+        
         image = cv2.imread(fn)
         if image is None:
             continue
@@ -45,13 +59,28 @@ def read_images( filenames, domain=None, image_size=64):
         elif domain == 'B':
             image = image[:, 256:, :]
 
-        image = cv2.resize(image, (image_size,image_size))
-        image = image.astype(np.float32) / 255.
-        image = image.transpose(2,0,1)
-        images.append( image )
+#         print('image: ', image)
+        try:
 
+            image = cv2.resize(image, (image_size,image_size))
+            image = image.astype(np.float32) / 255.
+            image = image.transpose(2,0,1)
+#             print('image shape', image.shape)
+            images.append( image )
+        except Exception as e:
+            cnt_bad_images +=1
+            os.remove(fn)
+            print("File Removed!")
+#             print('filename ', fn)
+#             print('image', image)
+#             print(str(e))
+
+#     print('#No. Bad Images: ', cnt_bad_images)
     images = np.stack( images )
     return images
+
+
+# -
 
 def read_attr_file( attr_path, image_dir ):
     f = open( attr_path )
@@ -105,6 +134,33 @@ def get_edge2photo_files(item='edges2handbags', test=False):
         n_images = len( image_paths )
         return [image_paths[:n_images/2], image_paths[n_images/2:]]
 
+
+# +
+def get_cat2panda_files(item='panda', test=False):
+
+#     item_path = panda_path
+
+
+    if item == 'cat':
+        item_path = cat_path
+    elif item == 'panda':
+        item_path = panda_path
+
+    if test == True:
+        item_path = os.path.join( item_path, 'val' )
+    else:
+        item_path = os.path.join( item_path, 'train' )
+
+    image_paths = map(lambda x: os.path.join( item_path, x ), os.listdir( item_path ))
+
+    if test == True:
+        return [image_paths, image_paths]
+    else:
+        n_images = len( image_paths )
+        return [image_paths[:n_images/2], image_paths[n_images/2:]]
+
+
+# -
 
 def get_facescrub_files(test=False, n_test=200):
     actor_path = os.path.join(facescrub_path, 'actors', 'face' )
